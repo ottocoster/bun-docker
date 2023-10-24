@@ -38,7 +38,9 @@ const server = Bun.serve<{ username: string; playerName: string }>({
 
       ws.publish(
         chatGroup,
-        `Online players (${onlinePlayers.length}): ${onlinePlayers.join(", ")}`
+        `Online players (${onlinePlayers.length}): ${onlinePlayers
+          .map((player) => `${player.playerName} (${player.username})`)
+          .join(", ")}`
       );
     },
     close(ws) {
