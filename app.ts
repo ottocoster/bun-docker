@@ -1,9 +1,10 @@
 const NODE_ENV = process.env.NODE_ENV ?? "development";
 
+let onlinePlayers: string[] = [];
+
 const server = Bun.serve<{ username: string }>({
   fetch(req, server) {
-    const cookies = req.headers.get("cookie");
-    const username = getUsernameFromCookies(cookies);
+    const username = req.headers.get("username");
     const success = server.upgrade(req, { data: { username } });
     if (success) return undefined;
 
@@ -14,10 +15,15 @@ const server = Bun.serve<{ username: string }>({
       const msg = `${ws.data.username} has entered the chat`;
       ws.subscribe("the-group-chat");
       ws.publish("the-group-chat", msg);
+      onlinePlayers.push(ws.data.username);
     },
     message(ws, message) {
       // the server re-broadcasts incoming messages to everyone
       ws.publish("the-group-chat", `${ws.data.username}: ${message}`);
+      ws.publish(
+        "the-group-chat",
+        `Online players (${onlinePlayers.length}): ${onlinePlayers.join(", ")}`
+      );
     },
     close(ws) {
       const msg = `${ws.data.username} has left the chat`;
@@ -28,17 +34,3 @@ const server = Bun.serve<{ username: string }>({
 });
 
 console.log(`[${NODE_ENV}] Listening on ${server.hostname}:${server.port}`);
-
-function getUsernameFromCookies(cookies: string | null): string {
-  if (!cookies) return "";
-
-  const cookieArray = cookies.split("; ");
-  const usernameCookie = cookieArray.find((cookie) =>
-    cookie.startsWith("username=")
-  );
-
-  if (!usernameCookie) return "";
-
-  const username = usernameCookie.split("=")[1];
-  return username;
-}
