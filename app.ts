@@ -1,14 +1,15 @@
 const NODE_ENV = process.env.NODE_ENV ?? "development";
 
 let onlinePlayers: Record<string, string>[];
-
 const chatGroup = "the-group-chat";
+
 const server = Bun.serve<{ username: string; playerName: string }>({
   fetch(req, server) {
     const { searchParams } = new URL(req.url);
     const username = searchParams.get("username");
     const playerName = searchParams.get("playername");
     const success = server.upgrade(req, { data: { username, playerName } });
+
     if (success) return undefined;
 
     return new Response("Hello rikken");
@@ -48,6 +49,7 @@ const server = Bun.serve<{ username: string; playerName: string }>({
       console.log(`[${NODE_ENV}] ${msg}`);
 
       ws.unsubscribe(chatGroup);
+
       onlinePlayers = onlinePlayers.filter(
         (player) => player.username !== ws.data.username
       );
