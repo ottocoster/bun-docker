@@ -2,34 +2,37 @@ const NODE_ENV = process.env.NODE_ENV ?? "development";
 
 let onlinePlayers: string[] = [];
 
-const server = Bun.serve({
+const server = Bun.serve<{ username: string }>({
   fetch(req, server) {
-    const success = server.upgrade(req);
+    const { searchParams } = new URL(req.url);
+    const username = searchParams.get("username");
+    const success = server.upgrade(req, { data: { username } });
     if (success) return undefined;
 
-    return new Response("Hello world");
+    return new Response("Hello rikken");
   },
   websocket: {
     open(ws) {
       ws.subscribe("the-group-chat");
-      const msg = `A new player has entered the chat`;
+      const msg = `${ws.data.username} has entered the chat`;
       ws.publish("the-group-chat", msg);
-      onlinePlayers.push("player");
+      onlinePlayers.push(ws.data.username);
     },
-    message(ws, msg) {
+    message(ws, message) {
       // the server re-broadcasts incoming messages to everyone
-      const user = (msg as string).match(/(.*):/)?.[1];
-      const message = (msg as string).match(/:(.*)/)?.[1];
-      ws.publish("the-group-chat", `${user}: ${message}`);
+      ws.publish("the-group-chat", `${ws.data.username}: ${message}`);
       ws.publish(
         "the-group-chat",
         `Online players (${onlinePlayers.length}): ${onlinePlayers.join(", ")}`
       );
     },
     close(ws) {
-      const msg = `Player has left the chat`;
+      const msg = `${ws.data.username} has left the chat`;
       ws.publish("the-group-chat", msg);
       ws.unsubscribe("the-group-chat");
+      onlinePlayers = onlinePlayers.filter(
+        (username) => username !== ws.data.username
+      );
     },
   },
 });
