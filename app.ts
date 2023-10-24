@@ -15,6 +15,7 @@ const server = Bun.serve<{ username: string; playerName: string }>({
     return new Response("Hello rikken");
   },
   websocket: {
+    publishToSelf: true,
     open(ws) {
       ws.subscribe(chatGroup);
 
