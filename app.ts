@@ -28,3 +28,17 @@ const server = Bun.serve<{ username: string }>({
 });
 
 console.log(`[${NODE_ENV}] Listening on ${server.hostname}:${server.port}`);
+
+function getUsernameFromCookies(cookies: string | null): string {
+  if (!cookies) return "";
+
+  const cookieArray = cookies.split("; ");
+  const usernameCookie = cookieArray.find((cookie) =>
+    cookie.startsWith("username=")
+  );
+
+  if (!usernameCookie) return "";
+
+  const username = usernameCookie.split("=")[1];
+  return username;
+}
