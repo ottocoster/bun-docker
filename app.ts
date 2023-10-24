@@ -20,7 +20,10 @@ const server = Bun.serve<{ username: string }>({
     },
     message(ws, message) {
       // the server re-broadcasts incoming messages to everyone
-      ws.publish("the-group-chat", `${ws.data.username}: ${message}`);
+      ws.publish(
+        "the-group-chat",
+        `${ws.data.username} (${server.requestIP}): ${message}`
+      );
       ws.publish(
         "the-group-chat",
         `Online players (${onlinePlayers.length}): ${onlinePlayers.join(", ")}`
