@@ -1,38 +1,55 @@
 const NODE_ENV = process.env.NODE_ENV ?? "development";
 
-let onlinePlayers: string[] = [];
-let requestIP: string | undefined;
+let onlinePlayers: Record<string, string>[];
 
-const server = Bun.serve<{ username: string }>({
+const chatGroup = "the-group-chat";
+const server = Bun.serve<{ username: string; playerName: string }>({
   fetch(req, server) {
     const { searchParams } = new URL(req.url);
     const username = searchParams.get("username");
-    const success = server.upgrade(req, { data: { username } });
+    const playerName = searchParams.get("playername");
+    const success = server.upgrade(req, { data: { username, playerName } });
     if (success) return undefined;
 
     return new Response("Hello rikken");
   },
   websocket: {
     open(ws) {
-      ws.subscribe("the-group-chat");
-      const msg = `${ws.data.username} has entered the chat`;
-      ws.publish("the-group-chat", msg);
-      onlinePlayers.push(ws.data.username);
+      ws.subscribe(chatGroup);
+
+      const msg = `${ws.data.playerName} (${ws.data.username}) has entered the chat`;
+
+      ws.publish(chatGroup, msg);
+
+      console.log(`[${NODE_ENV}] ${msg}`);
+
+      onlinePlayers.push({
+        playerName: ws.data.playerName,
+        username: ws.data.username,
+      });
     },
     message(ws, message) {
       // the server re-broadcasts incoming messages to everyone
-      ws.publish("the-group-chat", `${ws.data.username}: ${message}`);
       ws.publish(
-        "the-group-chat",
+        chatGroup,
+        `${ws.data.playerName} (${ws.data.username}): ${message}`
+      );
+
+      ws.publish(
+        chatGroup,
         `Online players (${onlinePlayers.length}): ${onlinePlayers.join(", ")}`
       );
     },
     close(ws) {
-      const msg = `${ws.data.username} has left the chat`;
-      ws.publish("the-group-chat", msg);
-      ws.unsubscribe("the-group-chat");
+      const msg = `${ws.data.playerName} (${ws.data.username}) has left the chat`;
+
+      ws.publish(chatGroup, msg);
+
+      console.log(`[${NODE_ENV}] ${msg}`);
+
+      ws.unsubscribe(chatGroup);
       onlinePlayers = onlinePlayers.filter(
-        (username) => username !== ws.data.username
+        (player) => player.username !== ws.data.username
       );
     },
   },
