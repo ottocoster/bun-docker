@@ -40,4 +40,4 @@ That's it! Your web service will be live on your Render URL as soon as the build
 
 ### One-click deploy
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/render-examples/bun-docker)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ottocoster/bun-docker)
