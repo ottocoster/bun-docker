@@ -2,31 +2,32 @@ const NODE_ENV = process.env.NODE_ENV ?? "development";
 
 let onlinePlayers: string[] = [];
 
-const server = Bun.serve<{ username: string }>({
+const server = Bun.serve({
   fetch(req, server) {
-    const username = req.headers.get("username");
-    const success = server.upgrade(req, { data: { username } });
+    const success = server.upgrade(req);
     if (success) return undefined;
 
     return new Response("Hello world");
   },
   websocket: {
     open(ws) {
-      const msg = `${ws.data.username} has entered the chat`;
       ws.subscribe("the-group-chat");
+      const msg = `A new player has entered the chat`;
       ws.publish("the-group-chat", msg);
-      onlinePlayers.push(ws.data.username);
+      onlinePlayers.push("player");
     },
-    message(ws, message) {
+    message(ws, msg) {
       // the server re-broadcasts incoming messages to everyone
-      ws.publish("the-group-chat", `${ws.data.username}: ${message}`);
+      const user = (msg as string).match(/(.*):/)?.[1];
+      const message = (msg as string).match(/:(.*)/)?.[1];
+      ws.publish("the-group-chat", `${user}: ${message}`);
       ws.publish(
         "the-group-chat",
         `Online players (${onlinePlayers.length}): ${onlinePlayers.join(", ")}`
       );
     },
     close(ws) {
-      const msg = `${ws.data.username} has left the chat`;
+      const msg = `Player has left the chat`;
       ws.publish("the-group-chat", msg);
       ws.unsubscribe("the-group-chat");
     },
