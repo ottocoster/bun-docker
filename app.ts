@@ -5,7 +5,6 @@ let requestIP: string | undefined;
 
 const server = Bun.serve<{ username: string }>({
   fetch(req, server) {
-    requestIP = server.requestIP(req)?.address;
     const { searchParams } = new URL(req.url);
     const username = searchParams.get("username");
     const success = server.upgrade(req, { data: { username } });
@@ -22,10 +21,7 @@ const server = Bun.serve<{ username: string }>({
     },
     message(ws, message) {
       // the server re-broadcasts incoming messages to everyone
-      ws.publish(
-        "the-group-chat",
-        `${ws.data.username} (${requestIP}): ${message}`
-      );
+      ws.publish("the-group-chat", `${ws.data.username}: ${message}`);
       ws.publish(
         "the-group-chat",
         `Online players (${onlinePlayers.length}): ${onlinePlayers.join(", ")}`
