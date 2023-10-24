@@ -1,6 +1,6 @@
 const NODE_ENV = process.env.NODE_ENV ?? "development";
 
-let onlinePlayers: Record<string, string>[];
+let onlinePlayers: Record<string, string>[] = [];
 const chatGroup = "the-group-chat";
 
 const server = Bun.serve<{ username: string; playerName: string }>({
@@ -22,7 +22,7 @@ const server = Bun.serve<{ username: string; playerName: string }>({
 
       ws.publish(chatGroup, msg);
 
-      console.log(`[${NODE_ENV}] ${msg}`);
+      // console.log(`[${NODE_ENV}] ${msg}`);
 
       onlinePlayers.push({
         playerName: ws.data.playerName,
@@ -46,7 +46,7 @@ const server = Bun.serve<{ username: string; playerName: string }>({
 
       ws.publish(chatGroup, msg);
 
-      console.log(`[${NODE_ENV}] ${msg}`);
+      // console.log(`[${NODE_ENV}] ${msg}`);
 
       ws.unsubscribe(chatGroup);
 
