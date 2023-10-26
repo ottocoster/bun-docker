@@ -1,7 +1,7 @@
 const NODE_ENV = process.env.NODE_ENV ?? "development";
 
 let onlinePlayers: Record<string, string>[] = [];
-const chatGroup = "the-group-chat";
+const chatGroup = "lobby";
 
 const server = Bun.serve<{ username: string; playerName: string }>({
   fetch(req, server) {
@@ -12,14 +12,14 @@ const server = Bun.serve<{ username: string; playerName: string }>({
 
     if (success) return undefined;
 
-    return new Response("Hello rikken");
+    return new Response("onlinerikken.nl websocket server");
   },
   websocket: {
     publishToSelf: true,
     open(ws) {
       ws.subscribe(chatGroup);
 
-      const msg = `${ws.data.playerName} (${ws.data.username}) has entered the chat`;
+      const msg = `${ws.data.playerName} (${ws.data.username}) komt de chat binnen`;
 
       ws.publish(chatGroup, msg);
 
@@ -32,10 +32,12 @@ const server = Bun.serve<{ username: string; playerName: string }>({
     },
     message(ws, message) {
       // the server re-broadcasts incoming messages to everyone
-      ws.publish(
-        chatGroup,
-        `${ws.data.playerName} (${ws.data.username}): ${message}`
-      );
+
+      const chatMessage = `${ws.data.playerName} (${ws.data.username}): ${message}`;
+
+      ws.publish(chatGroup, chatMessage);
+
+      console.log(`[${NODE_ENV}] ${chatMessage}`);
 
       ws.publish(
         chatGroup,
@@ -45,7 +47,7 @@ const server = Bun.serve<{ username: string; playerName: string }>({
       );
     },
     close(ws) {
-      const msg = `${ws.data.playerName} (${ws.data.username}) has left the chat`;
+      const msg = `${ws.data.playerName} (${ws.data.username}) heeft de chat verlaten`;
 
       ws.publish(chatGroup, msg);
 
