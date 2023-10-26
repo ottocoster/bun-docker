@@ -37,7 +37,10 @@ const server = Bun.serve<{ username: string; playerName: string }>({
 
       ws.publish(chatGroup, chatMessage);
 
-      console.log(`[${NODE_ENV}] ${chatMessage}`);
+      // Log if the message is not a ping heartbeat
+      if (message !== "ping") {
+        console.log(`[${NODE_ENV}] ${chatMessage}`);
+      }
 
       ws.publish(
         chatGroup,
