@@ -1,7 +1,9 @@
+import { onPlayerEnter } from "./start/onPlayerEnter";
+
 const NODE_ENV = process.env.NODE_ENV ?? "development";
 
 let onlinePlayers: Record<string, string>[] = [];
-const chatGroup = "lobby";
+const chatRoom = "chatRoom";
 
 const server = Bun.serve<{ username: string; playerName: string }>({
   fetch(req, server) {
@@ -17,11 +19,15 @@ const server = Bun.serve<{ username: string; playerName: string }>({
   websocket: {
     publishToSelf: true,
     open(ws) {
-      ws.subscribe(chatGroup);
+      ws.subscribe(chatRoom);
 
       const msg = `${ws.data.playerName} (${ws.data.username}) komt de chat binnen`;
 
-      ws.publish(chatGroup, msg);
+      ws.publish(chatRoom, msg);
+
+      const gameState = onPlayerEnter(ws.data);
+
+      ws.publish(chatRoom, `[gameState] ${JSON.stringify(gameState)}`);
 
       // console.log(`[${NODE_ENV}] ${msg}`);
 
@@ -32,19 +38,18 @@ const server = Bun.serve<{ username: string; playerName: string }>({
     },
     message(ws, message) {
       // the server re-broadcasts incoming messages to everyone
+      const chatMessage = `[chat] ${ws.data.playerName} (${ws.data.username}): ${message}`;
 
-      const chatMessage = `${ws.data.playerName} (${ws.data.username}): ${message}`;
-
-      ws.publish(chatGroup, chatMessage);
+      ws.publish(chatRoom, chatMessage);
 
       // Log if the message is not a ping heartbeat
-      if (message !== "ping") {
+      if (message !== "[ping]") {
         console.log(`[${NODE_ENV}] ${chatMessage}`);
       }
 
       ws.publish(
-        chatGroup,
-        `Online players (${onlinePlayers.length}): ${onlinePlayers
+        chatRoom,
+        `[onlinePlayers] (${onlinePlayers.length}): ${onlinePlayers
           .map((player) => `${player.playerName} (${player.username})`)
           .join(", ")}`
       );
@@ -52,11 +57,11 @@ const server = Bun.serve<{ username: string; playerName: string }>({
     close(ws) {
       const msg = `${ws.data.playerName} (${ws.data.username}) heeft de chat verlaten`;
 
-      ws.publish(chatGroup, msg);
+      ws.publish(chatRoom, msg);
 
       // console.log(`[${NODE_ENV}] ${msg}`);
 
-      ws.unsubscribe(chatGroup);
+      ws.unsubscribe(chatRoom);
 
       onlinePlayers = onlinePlayers.filter(
         (player) => player.username !== ws.data.username
