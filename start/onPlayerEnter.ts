@@ -90,5 +90,7 @@ export function onPlayerEnter(player: Player) {
     lobby.players = [];
 
     return gameState;
+  } else {
+    return lobby.players;
   }
 }
